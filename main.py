@@ -90,22 +90,11 @@ async def handle_private_message(message):
                         is_allowed = False
     except:
         print("Error while connecting to the database #5")
-    if (message.chat.id != group_chat_id and is_allowed):
-        checkrow = []
-        try:
-            async with aiosqlite.connect(file_of_db) as db:
-                async with db.execute(f"SELECT * FROM ids WHERE TelegramID={message.chat.id}") as cursor:
-                    async for row in cursor:
-                        checkrow = row
-                        print(row)
-        except:
-            print("Error while connecting to the database #2")
-
-        if checkrow == []:
+    if (is_allowed):
+        if (message.chat.id != group_chat_id):
+            checkrow = []
             try:
                 async with aiosqlite.connect(file_of_db) as db:
-                    await db.execute(f"INSERT INTO ids(TelegramID) VALUES ({message.chat.id})")
-                    await db.commit()
                     async with db.execute(f"SELECT * FROM ids WHERE TelegramID={message.chat.id}") as cursor:
                         async for row in cursor:
                             checkrow = row
@@ -113,9 +102,21 @@ async def handle_private_message(message):
             except:
                 print("Error while connecting to the database #2")
 
-        await bot.send_message(message.chat.id, "Thanks for suggesting news!")
-        await bot.send_message(group_chat_id, f"ID of sender: `{checkrow[0]}`", parse_mode="markdown")
-        await bot.forward_message(group_chat_id, message.chat.id, message.message_id)
+            if checkrow == []:
+                try:
+                    async with aiosqlite.connect(file_of_db) as db:
+                        await db.execute(f"INSERT INTO ids(TelegramID) VALUES ({message.chat.id})")
+                        await db.commit()
+                        async with db.execute(f"SELECT * FROM ids WHERE TelegramID={message.chat.id}") as cursor:
+                            async for row in cursor:
+                                checkrow = row
+                                print(row)
+                except:
+                    print("Error while connecting to the database #2")
+
+            await bot.send_message(message.chat.id, "Thanks for suggesting news!")
+            await bot.send_message(group_chat_id, f"ID of sender: `{checkrow[0]}`", parse_mode="markdown")
+            await bot.forward_message(group_chat_id, message.chat.id, message.message_id)
     else:
         await bot.send_message(message.chat.id, "You are banned")
 
